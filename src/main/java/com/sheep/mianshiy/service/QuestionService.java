@@ -3,6 +3,7 @@ package com.sheep.mianshiy.service;
 import com.sheep.mianshiy.model.entity.Question;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.sheep.mianshiy.model.dto.question.QuestionQueryRequest;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -14,4 +15,5 @@ import java.util.List;
 public interface QuestionService extends IService<Question> {
 
     List<Question> listQuestionByPage(QuestionQueryRequest questionQueryRequest);
+
 }

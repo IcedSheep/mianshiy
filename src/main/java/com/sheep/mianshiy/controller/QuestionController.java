@@ -10,22 +10,29 @@ import com.sheep.mianshiy.constant.UserConstant;
 import com.sheep.mianshiy.exception.BusinessException;
 import com.sheep.mianshiy.exception.ThrowUtils;
 
+import com.sheep.mianshiy.mapper.QuestionMapper;
+import com.sheep.mianshiy.model.dto.question.QuestionReviewRequest;
 import com.sheep.mianshiy.model.entity.Question;
 import com.sheep.mianshiy.model.entity.User;
 import com.sheep.mianshiy.model.dto.question.QuestionAddRequest;
 import com.sheep.mianshiy.model.dto.question.QuestionQueryRequest;
 import com.sheep.mianshiy.model.dto.question.QuestionUpdateRequest;
+import com.sheep.mianshiy.model.enums.ReviewStatusEnum;
 import com.sheep.mianshiy.model.vo.QuestionVO;
 import com.sheep.mianshiy.model.vo.UserVO;
 import com.sheep.mianshiy.service.QuestionService;
 import com.sheep.mianshiy.service.UserService;
 import com.sheep.mianshiy.utils.JsonUtils;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -44,16 +51,19 @@ public class QuestionController {
     @Resource
     private UserService userService;
 
+    @Resource
+    private QuestionMapper questionMapper;
+
+
 
 
     /**
-     * 创建题目
+     * 创建题目 (用户和管理员都需要审核)
      * @param questionAddRequest
      * @param request
      * @return
      */
     @PostMapping("/add")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Long> addQuestion(@RequestBody QuestionAddRequest questionAddRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(questionAddRequest == null, ErrorCode.PARAMS_ERROR);
         Question question = new Question();
@@ -98,7 +108,6 @@ public class QuestionController {
 
     /**
      * 更新题目（仅管理员可用）
-     *
      * @param questionUpdateRequest
      * @return
      */
@@ -117,6 +126,39 @@ public class QuestionController {
         ThrowUtils.throwIf(oldQuestion == null, ErrorCode.NOT_FOUND_ERROR);
         // 操作数据库
         boolean result = questionService.updateById(question);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        return ResultUtils.success(result);
+    }
+
+    /**
+     * 题目审核
+     * @param questionReviewRequest
+     * @return
+     */
+    @PostMapping("/review")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> reviewQuestion(@RequestBody QuestionReviewRequest questionReviewRequest, HttpServletRequest request) {
+        if (questionReviewRequest == null || questionReviewRequest.getId() <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+
+        Integer reviewStatus = questionReviewRequest.getReviewStatus();
+        String reviewMessage = questionReviewRequest.getReviewMessage();
+        ThrowUtils.throwIf(ReviewStatusEnum.getEnumByValue(reviewStatus) == null,ErrorCode.PARAMS_ERROR,"审核状态错误");
+        // 判断是否存在
+        long id = questionReviewRequest.getId();
+        Question oldQuestion = questionService.getById(id);
+        ThrowUtils.throwIf(oldQuestion == null, ErrorCode.NOT_FOUND_ERROR);
+        Question question = new Question();
+        BeanUtils.copyProperties(questionReviewRequest, question);
+        User loginUser = userService.getLoginUser(request);
+        // 审核人
+        question.setReviewerId(loginUser.getId());
+        // 审核时间
+        question.setReviewTime(new Date());
+        question.setReviewMessage(reviewMessage);
+        // 操作数据库
+        boolean result = questionMapper.updateQuestionById(question);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(result);
     }
@@ -144,7 +186,7 @@ public class QuestionController {
     }
 
     /**
-     * 分页获取题库下的题目
+     * 分页获取题目
      * @param questionQueryRequest
      * @return
      */

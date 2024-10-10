@@ -30,7 +30,10 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
      */
     @Override
     public List<Question> listQuestionByPage(QuestionQueryRequest questionQueryRequest) {
-        List<Question> questionList = questionMapper.listQuestionByPage(questionQueryRequest);
+        int current = questionQueryRequest.getCurrent();
+        int pageSize = questionQueryRequest.getPageSize();
+        int startIndex = (current - 1) * pageSize;
+        List<Question> questionList = questionMapper.listQuestionByPage(questionQueryRequest,startIndex);
         if (questionList.isEmpty()) {
             return new ArrayList<>();
         }

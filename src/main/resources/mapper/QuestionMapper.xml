@@ -5,51 +5,100 @@
 <mapper namespace="com.sheep.mianshiy.mapper.QuestionMapper">
 
     <resultMap id="BaseResultMap" type="com.sheep.mianshiy.model.entity.Question">
-            <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="title" column="title" jdbcType="VARCHAR"/>
-            <result property="content" column="content" jdbcType="VARCHAR"/>
-            <result property="tags" column="tags" jdbcType="VARCHAR"/>
-            <result property="answer" column="answer" jdbcType="VARCHAR"/>
-            <result property="userId" column="userId" jdbcType="BIGINT"/>
-            <result property="editTime" column="editTime" jdbcType="TIMESTAMP"/>
-            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
-            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
-            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="title" column="title" jdbcType="VARCHAR"/>
+        <result property="content" column="content" jdbcType="VARCHAR"/>
+        <result property="tags" column="tags" jdbcType="VARCHAR"/>
+        <result property="answer" column="answer" jdbcType="VARCHAR"/>
+        <result property="userId" column="userId" jdbcType="BIGINT"/>
+        <result property="reviewStatus" column="reviewStatus" jdbcType="INTEGER"/>
+        <result property="reviewMessage" column="reviewMessage" jdbcType="VARCHAR"/>
+        <result property="reviewerId" column="reviewerId" jdbcType="BIGINT"/>
+        <result property="reviewTime" column="reviewTime" jdbcType="TIMESTAMP"/>
+        <result property="editTime" column="editTime" jdbcType="TIMESTAMP"/>
+        <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+        <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
         id,title,content,
-        tags,answer,userId,
-        editTime,createTime,updateTime,
-        isDelete
+    tags,answer,userId,
+    reviewStatus,reviewMessage,reviewerId,
+    reviewTime,editTime,createTime,
+    updateTime,isDelete
     </sql>
+
+    <update id="updateQuestionById">
+        update question <set>
+        <if test="question.reviewStatus != null">
+            reviewStatus = #{question.reviewStatus},
+        </if>
+        <if test="question.reviewMessage != null and question.reviewMessage.trim() != ''">
+            reviewMessage = #{question.reviewMessage},
+        </if>
+        <if test="question.reviewerId != null">
+            reviewerId = #{question.reviewerId},
+        </if>
+        <if test="question.reviewTime != null">
+            reviewTime = #{question.reviewTime},
+        </if>
+    </set>
+    where id = #{question.id}
+    </update>
+
     <select id="listQuestionByQuestionBankId" resultType="com.sheep.mianshiy.model.entity.Question">
-    select  * from question where id in
+        select  * from question where id in
         <foreach collection="questionIdList" item="questionId" open="(" separator="," close=")">
-               #{questionId}
+            #{questionId}
         </foreach>
     </select>
 
     <select id="listQuestionByPage" resultType="com.sheep.mianshiy.model.entity.Question">
-        select * from question <where>
-        <if test="title != null and title != '' ">
-            title LIKE CONCAT('%', #{title}, '%')
-        </if>
-        <if test="content != null and content != '' ">
-            and content like concat('%',#{content},'%')
-        </if>
-        <if test="answer != null and answer != '' ">
-             and answer LIKE CONCAT('%', #{answer}, '%')
-        </if>
-        <if test="tags != null and tags.size() > 0 ">
-            AND (
-            <foreach collection="tags" item="tag" separator=" OR ">
-                tags LIKE CONCAT('%', #{tag}, '%')
-            </foreach>
-            )
-        </if>
+        select * from question
+        <where>
+            <if test=" questionQueryRequest.title != null and questionQueryRequest.title.trim() != '' ">
+                title LIKE CONCAT('%', #{questionQueryRequest.title}, '%')
+            </if>
+            <if test="questionQueryRequest.content != null and questionQueryRequest.content.trim() != '' ">
+                and content like concat('%',#{questionQueryRequest.content},'%')
+            </if>
+            <if test="questionQueryRequest.answer != null and questionQueryRequest.answer.trim() != '' ">
+                and answer LIKE CONCAT('%', #{questionQueryRequest.answer}, '%')
+            </if>
+            <if test="questionQueryRequest.reviewStatus != null">
+                AND reviewStatus = #{questionQueryRequest.reviewStatus}
+            </if>
+            <if test="questionQueryRequest.reviewerId != null">
+                AND reviewerId = #{questionQueryRequest.reviewerId}
+            </if>
+            <if test="questionQueryRequest.userId != null">
+                AND userId = #{questionQueryRequest.userId}
+            </if>
+            <if test="questionQueryRequest.tags != null and questionQueryRequest.tags.size() > 0 ">
+                AND (
+                <foreach collection="questionQueryRequest.tags" item="tag" separator=" OR ">
+                    tags LIKE CONCAT('%', #{tag}, '%')
+                </foreach>
+                )
+            </if>
+        </where>
         and isDelete = 0
-    </where>
+        <if test="questionQueryRequest.sortField != null and questionQueryRequest.sortField.trim() != ''">
+            ORDER BY ${questionQueryRequest.sortField} ${questionQueryRequest.sortOrder}
+        </if>
+        <if test=" startIndex != null ">
+            LIMIT #{startIndex} , #{questionQueryRequest.pageSize}
+        </if>
+    </select>
+
+
+    <select id="queryExistQuestionIds" resultType="java.lang.Long">
+        select id from question where id in
+        <foreach collection="questionIdList" item="questionId" separator="," open="(" close=")">
+            #{questionId}
+        </foreach>
     </select>
 
 </mapper>
+

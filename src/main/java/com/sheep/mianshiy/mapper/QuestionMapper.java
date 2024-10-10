@@ -20,7 +20,9 @@ public interface QuestionMapper extends BaseMapper<Question> {
      * @param questionQueryRequest
      * @return
      */
-    List<Question> listQuestionByPage(QuestionQueryRequest questionQueryRequest);
+    List<Question> listQuestionByPage(@Param("questionQueryRequest") QuestionQueryRequest questionQueryRequest, @Param("startIndex") Integer startIndex);
+
+    boolean updateQuestionById(@Param("question") Question question);
 }
 
 
