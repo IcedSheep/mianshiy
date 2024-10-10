@@ -1,14 +1,17 @@
 package com.sheep.mianshiy.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sheep.mianshiy.annotation.AuthCheck;
 import com.sheep.mianshiy.common.BaseResponse;
 import com.sheep.mianshiy.common.DeleteRequest;
 import com.sheep.mianshiy.common.ErrorCode;
 import com.sheep.mianshiy.common.ResultUtils;
+import com.sheep.mianshiy.constant.RedisConstant;
 import com.sheep.mianshiy.constant.UserConstant;
 import com.sheep.mianshiy.exception.BusinessException;
 import com.sheep.mianshiy.exception.ThrowUtils;
+import com.sheep.mianshiy.mapper.UserMapper;
 import com.sheep.mianshiy.model.dto.user.UserAddRequest;
 import com.sheep.mianshiy.model.dto.user.UserLoginRequest;
 import com.sheep.mianshiy.model.dto.user.UserQueryRequest;
@@ -16,17 +19,31 @@ import com.sheep.mianshiy.model.dto.user.UserRegisterRequest;
 import com.sheep.mianshiy.model.dto.user.UserUpdateMyRequest;
 import com.sheep.mianshiy.model.dto.user.UserUpdateRequest;
 import com.sheep.mianshiy.model.entity.User;
+import com.sheep.mianshiy.model.entity.UserSignIn;
 import com.sheep.mianshiy.model.vo.LoginUserVO;
 import com.sheep.mianshiy.model.vo.UserVO;
 import com.sheep.mianshiy.service.UserService;
 
+import java.sql.Date;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.Year;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 
+import com.sheep.mianshiy.service.UserSignInService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.elasticsearch.annotations.DateFormat;
+import org.springframework.data.redis.connection.BitFieldSubCommands;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,6 +52,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import static com.sheep.mianshiy.service.impl.UserServiceImpl.SALT;
+import static org.springframework.data.elasticsearch.annotations.DateFormat.year;
 
 /**
  * 用户接口
@@ -46,8 +64,18 @@ import static com.sheep.mianshiy.service.impl.UserServiceImpl.SALT;
 @Slf4j
 public class UserController {
 
+//    @Resource
+//    private StringRedisTemplate stringRedisTemplate;
+
     @Resource
     private UserService userService;
+
+    @Resource
+    private UserSignInService userSignInService;
+
+    @Resource
+    private UserMapper userMapper;
+
 
 
     // region 登录相关
@@ -285,4 +313,73 @@ public class UserController {
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
     }
+
+    /**
+     * 用户签到
+     * @param request
+     * @return
+     */
+    @GetMapping("/sign_in/db")
+    BaseResponse<Boolean> userSignInByDB(HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        Long userId = loginUser.getId();
+        Date signDate = Date.valueOf(LocalDate.now());
+
+        // 不能重复签到
+        QueryWrapper<UserSignIn> userSignInQueryWrapper = new QueryWrapper<>();
+        userSignInQueryWrapper.eq("userId",userId);
+        userSignInQueryWrapper.eq("signDate",signDate);
+        UserSignIn userSignIn = userSignInService.getOne(userSignInQueryWrapper);
+        ThrowUtils.throwIf(userSignIn != null,ErrorCode.OPERATION_ERROR,"不能重复签到");
+        userSignIn = UserSignIn.builder()
+                .signDate(signDate).
+                userId(userId).build();
+        boolean result = userSignInService.save(userSignIn);
+        ThrowUtils.throwIf(!result,ErrorCode.OPERATION_ERROR,"签到失败");
+        return ResultUtils.success(result);
+    }
+
+
+    /**
+     * 查看用户某年某月的签到情况
+     * @param request
+     * @return
+     */
+    @GetMapping("/sign_in_record/db")
+    public BaseResponse< List<String>> getUserSignInRecordByDB(HttpServletRequest request, Integer year, Integer month) {
+        User loginUser = userService.getLoginUser(request);
+        Long userId = loginUser.getId();
+        // 如果时间日期为null，获取当前月份
+        year = Optional.ofNullable(year).orElse(LocalDate.now().getYear());
+        month = Optional.ofNullable(month).orElse(LocalDate.now().getMonthValue());
+        YearMonth yearMonth = YearMonth.of(year, month);
+        // 获取该月的第一天 将 yearMonth.atDay(1) 的LocalDate 转成 Date
+        Date startOfMonth = Date.valueOf(yearMonth.atDay(1));
+        // 获取该月的最后一天
+        Date endOfMonth = Date.valueOf(yearMonth.atEndOfMonth());
+        // 查询数据库 select * from user_sign_in where userId = ? and signDate between ? and ?
+        List<UserSignIn> userSignInList = userMapper.listUserSignInRecordOfMonth(userId,startOfMonth,endOfMonth);
+        List<String> dateList = userSignInList.stream()
+                .map(UserSignIn::getSignDate)
+                // 转换日期格式
+                .map(date -> formatDate(date))
+                .collect(Collectors.toList());
+
+        return ResultUtils.success(dateList);
+    }
+
+
+    /**
+     * 时间格式解析
+     * @param date
+     * @return
+     */
+    private static String formatDate(java.util.Date date) {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        return formatter.format(date);
+    }
+
+
+
+
 }

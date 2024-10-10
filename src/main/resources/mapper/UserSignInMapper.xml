@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sheep.mianshiy.mapper.UserSignInMapper">
+
+    <resultMap id="BaseResultMap" type="com.sheep.mianshiy.model.entity.UserSignIn">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="userId" column="userId" jdbcType="BIGINT"/>
+            <result property="signDate" column="signDate" jdbcType="DATE"/>
+            <result property="createdTime" column="createdTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,userId,signDate,
+        createdTime
+    </sql>
+</mapper>
