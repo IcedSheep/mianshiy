@@ -23,4 +23,8 @@
         userName,userAvatar,userProfile,
         userRole,createTime,updateTime,isDelete
     </sql>
+    <select id="listUserSignInRecordOfMonth" resultType="com.sheep.mianshiy.model.entity.UserSignIn">
+        select * from user_sign_in
+                 where userId = #{userId} and signDate between #{startOfMonth} and #{endOfMonth}
+    </select>
 </mapper>
