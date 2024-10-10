@@ -6,32 +6,30 @@ import com.sheep.mianshiy.common.BaseResponse;
 import com.sheep.mianshiy.common.DeleteRequest;
 import com.sheep.mianshiy.common.ErrorCode;
 import com.sheep.mianshiy.common.ResultUtils;
+import com.sheep.mianshiy.constant.QuestionConstant;
 import com.sheep.mianshiy.constant.UserConstant;
 import com.sheep.mianshiy.exception.BusinessException;
 import com.sheep.mianshiy.exception.ThrowUtils;
-
 import com.sheep.mianshiy.mapper.QuestionMapper;
-import com.sheep.mianshiy.model.dto.question.QuestionReviewRequest;
-import com.sheep.mianshiy.model.entity.Question;
-import com.sheep.mianshiy.model.entity.User;
 import com.sheep.mianshiy.model.dto.question.QuestionAddRequest;
 import com.sheep.mianshiy.model.dto.question.QuestionQueryRequest;
+import com.sheep.mianshiy.model.dto.question.QuestionReviewRequest;
 import com.sheep.mianshiy.model.dto.question.QuestionUpdateRequest;
+import com.sheep.mianshiy.model.entity.Question;
+import com.sheep.mianshiy.model.entity.User;
 import com.sheep.mianshiy.model.enums.ReviewStatusEnum;
+import com.sheep.mianshiy.model.enums.UserRoleEnum;
 import com.sheep.mianshiy.model.vo.QuestionVO;
 import com.sheep.mianshiy.model.vo.UserVO;
 import com.sheep.mianshiy.service.QuestionService;
 import com.sheep.mianshiy.service.UserService;
 import com.sheep.mianshiy.utils.JsonUtils;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -169,12 +167,20 @@ public class QuestionController {
      * @return
      */
     @GetMapping("/get/vo")
-    public BaseResponse<QuestionVO> getQuestionVOById(long id, HttpServletRequest request) {
-        ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
+    public BaseResponse<QuestionVO> getQuestionVOById(Long id, HttpServletRequest request) {
+        ThrowUtils.throwIf(id == null || id <= 0, ErrorCode.PARAMS_ERROR);
         // 查询数据库
         Question question = questionService.getById(id);
         ThrowUtils.throwIf(question == null, ErrorCode.NOT_FOUND_ERROR);
+        Integer needVip = question.getNeedVip();
         User loginUser = userService.getLoginUser(request);
+        String userRole = loginUser.getUserRole();
+        // 如果是会员题目，不是vip用户又不是管理员不能访问
+        if (QuestionConstant.REQUIREDVIP.equals(needVip)) {
+            if (!userService.isAdmin(loginUser) && !UserRoleEnum.VIP.equals(UserRoleEnum.getEnumByValue(userRole)) ) {
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR,"没有权限访问");
+            }
+        }
         // 查询关联的用户
         User user = userService.getById(loginUser.getId());
         UserVO userVO = userService.getUserVO(user);

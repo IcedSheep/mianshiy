@@ -1,27 +1,27 @@
 package com.sheep.mianshiy.model.enums;
 
+import org.apache.commons.lang3.ObjectUtils;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.ObjectUtils;
 
 /**
- * 用户角色枚举
+ * 题目难易程度枚举
  *
 
  */
-public enum UserRoleEnum {
+public enum QuestionDifficultyEnum {
 
-    USER("用户", "user"),
-    ADMIN("管理员", "admin"),
-    VIP("会员", "vip"),
-    BAN("被封号", "ban");
+    SIMPLE("简单", 0),
+    MEDIUM("中等", 1),
+    DIFFICULTY("苦难", 2);
 
     private final String text;
 
-    private final String value;
+    private final Integer value;
 
-    UserRoleEnum(String text, String value) {
+    QuestionDifficultyEnum(String text, Integer value) {
         this.text = text;
         this.value = value;
     }
@@ -31,7 +31,7 @@ public enum UserRoleEnum {
      *
      * @return
      */
-    public static List<String> getValues() {
+    public static List<Integer> getValues() {
         return Arrays.stream(values()).map(item -> item.value).collect(Collectors.toList());
     }
 
@@ -41,11 +41,11 @@ public enum UserRoleEnum {
      * @param value
      * @return
      */
-    public static UserRoleEnum getEnumByValue(String value) {
+    public static QuestionDifficultyEnum getEnumByValue(String value) {
         if (ObjectUtils.isEmpty(value)) {
             return null;
         }
-        for (UserRoleEnum anEnum : UserRoleEnum.values()) {
+        for (QuestionDifficultyEnum anEnum : QuestionDifficultyEnum.values()) {
             if (anEnum.value.equals(value)) {
                 return anEnum;
             }
@@ -53,7 +53,7 @@ public enum UserRoleEnum {
         return null;
     }
 
-    public String getValue() {
+    public Integer getValue() {
         return value;
     }
 

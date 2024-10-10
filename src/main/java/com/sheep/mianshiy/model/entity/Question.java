@@ -60,6 +60,31 @@ public class Question implements Serializable {
     private Date reviewTime;
 
     /**
+     * 仅会员可见（1 表示仅会员可见）
+     */
+    private Integer needVip;
+
+    /**
+     * 题目难度程度（0 简单，1 中等，2 困难）
+     */
+    private Integer difficult;
+
+    /**
+     * 浏览量
+     */
+    private Integer viewNum;
+
+    /**
+     * 点赞数
+     */
+    private Integer thumbNum;
+
+    /**
+     * 收藏数
+     */
+    private Integer favourNum;
+
+    /**
      * 编辑时间
      */
     private Date editTime;

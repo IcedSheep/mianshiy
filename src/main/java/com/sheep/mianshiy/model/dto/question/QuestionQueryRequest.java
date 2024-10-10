@@ -57,6 +57,16 @@ public class QuestionQueryRequest extends PageRequest implements Serializable {
      */
     private Long userId;
 
+    /**
+     * 仅会员可见（1 表示仅会员可见）
+     */
+    private Integer needVip;
+
+    /**
+     * 题目难度程度（0 简单，1 中等，2 困难）
+     */
+    private Integer difficult;
+
 
     private static final long serialVersionUID = 1L;
 }

@@ -48,6 +48,41 @@ public class QuestionVO implements Serializable {
     private Long userId;
 
     /**
+     * 审核人 id
+     */
+    private Long reviewerId;
+
+    /**
+     * 审核时间
+     */
+    private Date reviewTime;
+    /**
+     * 仅会员可见（1 表示仅会员可见）
+     */
+    private Integer needVip;
+
+    /**
+     * 题目难度程度（0 简单，1 中等，2 困难）
+     */
+    private Integer difficult;
+
+    /**
+     * 浏览量
+     */
+    private Integer viewNum;
+
+    /**
+     * 点赞数
+     */
+    private Integer thumbNum;
+
+    /**
+     * 收藏数
+     */
+    private Integer favourNum;
+
+
+    /**
      * 编辑时间
      */
     private Date editTime;
@@ -63,7 +98,6 @@ public class QuestionVO implements Serializable {
     private Date updateTime;
 
 
-    private static final long serialVersionUID = 1L;
     /**
      * 创建用户信息
      */
@@ -75,6 +109,8 @@ public class QuestionVO implements Serializable {
      * @param questionVO
      * @return
      */
+
+    private static final long serialVersionUID = 1L;
     public static Question voToObj(QuestionVO questionVO) {
         if (questionVO == null) {
             return null;
