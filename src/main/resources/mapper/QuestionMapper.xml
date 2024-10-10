@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sheep.mianshiy.mapper.QuestionMapper">
+
+    <resultMap id="BaseResultMap" type="com.sheep.mianshiy.model.entity.Question">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="title" column="title" jdbcType="VARCHAR"/>
+            <result property="content" column="content" jdbcType="VARCHAR"/>
+            <result property="tags" column="tags" jdbcType="VARCHAR"/>
+            <result property="answer" column="answer" jdbcType="VARCHAR"/>
+            <result property="userId" column="userId" jdbcType="BIGINT"/>
+            <result property="editTime" column="editTime" jdbcType="TIMESTAMP"/>
+            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,title,content,
+        tags,answer,userId,
+        editTime,createTime,updateTime,
+        isDelete
+    </sql>
+    <select id="listQuestionByQuestionBankId" resultType="com.sheep.mianshiy.model.entity.Question">
+    select  * from question where id in
+        <foreach collection="questionIdList" item="questionId" open="(" separator="," close=")">
+               #{questionId}
+        </foreach>
+    </select>
+
+    <select id="listQuestionByPage" resultType="com.sheep.mianshiy.model.entity.Question">
+        select * from question <where>
+        <if test="title != null and title != '' ">
+            title LIKE CONCAT('%', #{title}, '%')
+        </if>
+        <if test="content != null and content != '' ">
+            and content like concat('%',#{content},'%')
+        </if>
+        <if test="answer != null and answer != '' ">
+             and answer LIKE CONCAT('%', #{answer}, '%')
+        </if>
+        <if test="tags != null and tags.size() > 0 ">
+            AND (
+            <foreach collection="tags" item="tag" separator=" OR ">
+                tags LIKE CONCAT('%', #{tag}, '%')
+            </foreach>
+            )
+        </if>
+        and isDelete = 0
+    </where>
+    </select>
+
+</mapper>
