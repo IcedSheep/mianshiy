@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sheep.mianshiy.mapper.QuestionFavourMapper">
+
+    <resultMap id="BaseResultMap" type="com.sheep.mianshiy.model.entity.QuestionFavour">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="questionId" column="questionId" jdbcType="BIGINT"/>
+            <result property="userId" column="userId" jdbcType="BIGINT"/>
+            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,questionId,userId,
+        createTime,updateTime
+    </sql>
+    <delete id="remove">
+        delete from question_favour where userId = #{userId} and questionId = #{questionId}
+    </delete>
+    <select id="getQuestionFavour" resultType="com.sheep.mianshiy.model.entity.QuestionFavour">
+        select * from question_favour where userId = #{userId} and questionId = #{questionId}
+    </select>
+</mapper>
