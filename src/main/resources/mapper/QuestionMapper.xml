@@ -55,6 +55,13 @@
     </set>
     where id = #{question.id}
     </update>
+    <update id="decreaseFavourNum">
+        update question set favourNum = favourNum - 1 where id = #{questionId}
+    </update>
+
+    <update id="incrFavourNum">
+        update question set favourNum = favourNum + 1 where id = #{questionId}
+    </update>
 
     <select id="listQuestionByQuestionBankId" resultType="com.sheep.mianshiy.model.entity.Question">
         select  * from question where id in

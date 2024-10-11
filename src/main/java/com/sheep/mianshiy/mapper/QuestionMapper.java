@@ -23,6 +23,20 @@ public interface QuestionMapper extends BaseMapper<Question> {
     List<Question> listQuestionByPage(@Param("questionQueryRequest") QuestionQueryRequest questionQueryRequest, @Param("startIndex") Integer startIndex);
 
     boolean updateQuestionById(@Param("question") Question question);
+
+    /**
+     * 收藏数减一
+     * @param questionId
+     * @return
+     */
+    Integer decreaseFavourNum(@Param("questionId") long questionId);
+
+    /**
+     * 收藏数加一
+     * @param questionId
+     * @return
+     */
+    Integer incrFavourNum(long questionId);
 }
 
 
